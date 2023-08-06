@@ -1,45 +1,8 @@
-usage() { echo "Usage: $0 [-v <version number>] [-m]  where -v is the version number, omit this flag to install latest ci build.  -m flag should be used if installing on microk8s  " 1>&2; exit 1; }
-
-while getopts ":v:m" o; do
-    case "${o}" in
-        v)
-            VERSION=${OPTARG}
-            ;;
-        m)
-            USEMICROK8S="true"
-            ;;
-        *)
-            usage
-            ;;
-    esac
-done
-shift $((OPTIND-1))
 
 
-
+VERSION="1.0.19"
 DOCKERREPO="ettec/opentp:"
 TAG=-$VERSION
-if [ -z "$VERSION" ]; then 
-	echo "installing latest Open Trading Platform ci build"; 
-	DOCKERREPO="ettec/opentp-ci-build:"
-	TAG=""
-        VERSION="cibuild" 
-else 
-       echo "installing Open Trading Platform version $VERSION"; 
-fi
-
-if [ "$USEMICROK8S" = "true" ];  then
- echo installing into MicroK8s cluster
- shopt -s expand_aliases
- alias kubectl=microk8s.kubectl
- alias helm=microk8s.helm3
-else
- echo installing into kubernetes cluster using kubectl current context
-fi
-
-
-DIRECTORY=$(cd `dirname $0` && pwd)
-cd $DIRECTORY 
 
 #Kafka
 
@@ -47,11 +10,12 @@ echo installing Kafka...
 
 kubectl create ns kafka
 
-helm repo add bitnami https://charts.bitnami.com/bitnami
+helm repo add bitnami https://charts.bitnami.com/bitnami --force-update
 
-helm install kafka-opentp --wait --namespace kafka  bitnami/kafka
+helm install zookeeper-opentp --namespace kafka bitnami/zookeeper --version 11.4.9 -set replicaCount=3 --set auth.enabled=false --set allowAnonymousLogin=true
+helm install kafka-opentp --wait --namespace kafka bitnami/kafka --version 23.0.7 --set zookeeperChrootPath=zookeeper-opentp.kafka.svc.cluster.local
 
-#install kafka cmd line client 
+#install kafka cmd line client
 
  
 kubectl apply --wait -f kafka_cmdline_client.yaml
@@ -66,9 +30,9 @@ kubectl create ns postgresql
 helm install opentp --wait --namespace postgresql bitnami/postgresql --set-file pgHbaConfiguration=./pb_hba_no_sec.conf --set volumePermissions.enabled=true
 
 echo loading data into Postgresql database...
-export POSTGRES_PASSWORD=$(kubectl get secret --namespace postgresql opentp-postgresql -o jsonpath="{.data.postgresql-password}" | base64 --decode)
+export POSTGRES_PASSWORD=$(kubectl get secret --namespace postgresql opentp-postgresql -o jsonpath="{.data.postgres-password}" | base64 --decode)
 
-kubectl run opentp-postgresql-client --rm --tty -i --restart='Never' --namespace postgresql --image  ${DOCKERREPO}data-loader-client${TAG} --env="POSTGRESQL_PASSWORD=$POSTGRES_PASSWORD" --command -- psql --host opentp-postgresql -U postgres -d postgres -p 5432 -a -f ./opentp.db
+kubectl run opentp-postgresql-client --rm --tty -i --restart='Never' --namespace postgresql --image  ettec/opentp:data-loader-client-1.0.19 --env="POSTGRESQL_PASSWORD=$POSTGRES_PASSWORD" --command -- psql --host opentp-postgresql -U postgres -d postgres -p 5432 -a -f ./opentp.db
 
 #Envoy
 
@@ -82,7 +46,7 @@ kubectl patch service envoy --namespace envoy --type='json' -p='[{"op": "replace
 
 
 #Orders topic
-kubectl exec -it --namespace=kafka cmdlineclient -- /bin/bash -c "kafka-topics --zookeeper kafka-opentp-zookeeper:2181 --topic orders --create --partitions 1 --replication-factor 1"
+kubectl exec -it --namespace=kafka cmdlineclient -- sh -c "kafka-topics --zookeeper zookeeper-opentp:2181 --topic orders --create --partitions 1 --replication-factor 1"
 
 
 #Opentp
@@ -90,7 +54,7 @@ kubectl exec -it --namespace=kafka cmdlineclient -- /bin/bash -c "kafka-topics -
 echo installing Open Trading Platform...
 
 
-helm install --wait --timeout 1200s otp-${VERSION} ../helm-otp-chart/ --set dockerRepo=${DOCKERREPO} --set dockerTag=${TAG}
+helm install --wait --timeout 1200s otp-1.0.19 ../helm-otp-chart/ --set dockerRepo="ettec/opentp:" --set dockerTag="-1.0.19"
 
 #Instructions to start client
 OTPPORT=$(kubectl get svc --namespace=envoy -o go-template='{{range .items}}{{range.spec.ports}}{{if .nodePort}}{{.nodePort}}{{"\n"}}{{end}}{{end}}{{end}}')

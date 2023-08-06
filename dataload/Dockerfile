@@ -1,2 +1,2 @@
-FROM docker.io/bitnami/postgresql:11.8.0-debian-10-r19
+FROM docker.io/bitnami/postgresql:15.3.0-debian-11-r17
 ADD opentp.db .

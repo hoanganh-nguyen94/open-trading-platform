@@ -6,7 +6,7 @@
   spec:
     containers:
     - name: kafka
-      image: confluentinc/cp-kafka:5.0.1 
+      image: confluentinc/cp-kafka:6.0.14
       command:
         - sh
         - -c

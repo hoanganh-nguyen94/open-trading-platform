@@ -18,11 +18,12 @@ That's it.  After the install script completes it will inform you of the port to
 
 Install a fresh copy of [microk8s](https://microk8s.io/) 1.21, e.g. using snap:
 
-`snap install microk8s --classic --channel=1.21/stable`
+`snap install microk8s install --channel=1.21/stable`
 
 Enable the required microk8s plugins using the following command:
 
-`microk8s enable dns storage helm3`
+`microk8s enable dns hostpath-storage helm3 dashboard`
+`microk8s enable dns storage helm3 dashboard`
 
 Start the cluster:
 
@@ -33,6 +34,7 @@ Clone the otp source code from https://github.com/ettec/open-trading-platform
 Run the installation script, from the root of the checkout with the arguments as shown:
 
 `./install/install.sh -v 1.0.19 -m `
+`microk8s dashboard-proxy`
 
 That's it.  After the install script completes it will inform you of the port to use to run the OTP client.  You can login using any of the following user ids, no password is required out of the box (the authentication-service has a hook for a token/password validation plugin). 
 
