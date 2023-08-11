@@ -52,6 +52,21 @@ That's it.  After the install script completes it will inform you of the port to
 
 **supportA** - has view only permission on the DeskA trading desk 
 
+- https://docs.bitnami.com/tutorials/deploy-scalable-kafka-zookeeper-cluster-kubernetes/
+
+To create a pod that you can use as a Kafka client run the following commands:
+
+```shell
+    kubectl run kafka-opentp-client --restart='Never' --image docker.io/bitnami/kafka:3.5.1-debian-11-r11 --namespace kafka --command -- sleep infinity
+    kubectl cp --namespace kafka /path/to/client.properties kafka-opentp-client:/tmp/client.properties
+    kubectl exec --tty -i kafka-opentp-client --namespace kafka -- bash c.cluster.local:19092 --topic test
+    
+    
+    
+    kubectl run kafka-opentp-client --restart='Never' --image docker.io/bitnami/kafka:3.5.1-debian-11-r1 --namespace kafka --command -- sleep infinity
+    kubectl exec --tty -i kafka-opentp-client --namespace kafka -- bash
+kafka-topics.sh --create --zookeeper ZOOKEEPER-SERVICE-NAME:2181 --replication-factor 1 --partitions 1 --topic mytopic
+```
 
 
 
