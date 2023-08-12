@@ -1,0 +1,9 @@
+## Cấu hình Zookeeper
+zookeeper:
+  enabled: true
+  replicas: 3
+
+## Cấu hình Kafka
+kafka:
+  enabled: true
+  replicas: 3
