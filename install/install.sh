@@ -28,10 +28,9 @@ helm install opentp --wait --namespace postgresql bitnami/postgresql --set-file 
 echo loading data into Postgresql database...
 export POSTGRES_PASSWORD=$(kubectl get secret --namespace postgresql opentp-postgresql -o jsonpath="{.data.postgres-password}" | base64 --decode)
 
-kubectl run opentp-postgresql-client --rm --tty -i --restart='Never' --namespace postgresql --image  ettec/opentp:data-loader-client-1.0.19 --env="POSTGRESQL_PASSWORD=$POSTGRES_PASSWORD" --command -- psql --host opentp-postgresql -U postgres -d postgres -p 5432 -a -f ./opentp.db
+kubectl run opentp-postgresql-client --rm --tty -i --restart='Never' --namespace postgresql --image hoanganhnguyen1994/dataload:postgresql-15-data-loader-client-1.0.19 --env="PGPASSWORD=$POSTGRES_PASSWORD" --command -- psql --host opentp-postgresql -U postgres -d postgres -p 5432 -a -f ./opentp.db
 
 #Envoy
-
 echo installing Envoy...
 
 kubectl create ns envoy
