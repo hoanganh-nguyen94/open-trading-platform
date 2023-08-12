@@ -1,4 +1,5 @@
 
+VERSION="1.0.19"
 DOCKERREPO="ettec/opentp:"
 TAG=-$VERSION
 
@@ -43,7 +44,6 @@ kubectl patch service envoy --namespace envoy --type='json' -p='[{"op": "replace
 
 
 #Orders topic
-kubectl exec -it --namespace=kafka cmdlineclient -- /bin/bash -c "kafka-topics --zookeeper kafka-opentp-zookeeper:2181 --topic orders --create --partitions 1 --replication-factor 1"
 kubectl exec -it --namespace=kafka cmdlineclient -- sh -c "kafka-topics --zookeeper kafka-opentp-zookeeper:2181 --topic orders --create --partitions 1 --replication-factor 1"
 
 

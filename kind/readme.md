@@ -10,22 +10,35 @@ helm upgrade --install --set args={--kubelet-insecure-tls} metrics-server metric
 
 
 ```
+```shell
+
+kubectl port-forward svc/xnassimulator -n opentp 50061
+
+```
+
+### Deploy nginx
+```shell
+kubectl create ns demo-nginx
+kubectl create deploy nginx --image nginx -n demo-nginx
+kubectl expose -n demo-nginx deploy nginx --port 80 --type NodePort
+
+```
 
 
 ### Setup Kong ingress controller (KIC) Kong manager
 ```shell
-kubectl apply -f kind/kic.yaml
+kubectl apply -f kic.yaml 
 
 ```
 
 ### App nginx example
 ```shell
 
-kubectl patch deployment -n kong ingress-kong -p '{"spec":{"template":{"spec":{"containers":[{"name":"proxy","ports":[{"containerPort":8000,"hostPort":80,"name":"proxy","protocol":"TCP"},{"containerPort":8443,"hostPort":43,"name":"proxy-ssl","protocol":"TCP"}]}],"nodeSelector":{"ingress-ready":"true"},"tolerations":[{"key":"node-role.kubernetes.io/control-plane","operator":"Equal","effect":"NoSchedule"},{"key":"node-role.kubernetes.io/master","operator":"Equal","effect":"NoSchedule"}]}}}}'
-
+kubectl patch deployment -n kong proxy-kong -p '{"spec":{"replicas":1,"template":{"spec":{"containers":[{"name":"proxy","ports":[{"containerPort":8e3,"hostPort":80,"name":"proxy-tcp","protocol":"TCP"},{"containerPort":8443,"hostPort":443,"name":"proxy-ssl","protocol":"TCP"}]}],"nodeSelector":{"ingress-ready":"true"},"tolerations":[{"key":"node-role.kubernetes.io/control-plane","operator":"Equal","effect":"NoSchedule"},{"key":"node-role.kubernetes.io/master","operator":"Equal","effect":"NoSchedule"}]}}}}'
 kubectl patch service -n kong kong-proxy -p '{"spec":{"type":"NodePort"}}'
+kubectl apply -f example/app.yaml 
+kubectl -n my-example port-forward svc/my-app 20001
 
-kubectl apply -f kind/example/app.yaml 
 ```
 
 ```shell
